@@ -434,12 +434,14 @@ enum http_host_state
 #define TOKEN(c)            STRICT_TOKEN(c)
 #define IS_URL_CHAR(c)      (BIT_AT(normal_url_char, (unsigned char)c))
 #define IS_HOST_CHAR(c)     (IS_ALPHANUM(c) || (c) == '.' || (c) == '-')
+#define HEADER_FIELD_TOKEN(c)  TOKEN(c)
 #else
 #define TOKEN(c)            tokens[(unsigned char)c]
 #define IS_URL_CHAR(c)                                                         \
   (BIT_AT(normal_url_char, (unsigned char)c) || ((c) & 0x80))
 #define IS_HOST_CHAR(c)                                                        \
   (IS_ALPHANUM(c) || (c) == '.' || (c) == '-' || (c) == '_')
+#define HEADER_FIELD_TOKEN(c)  ((c == '/') ? '/' : (TOKEN(c)))
 #endif
 
 /**
@@ -1258,7 +1260,7 @@ reexecute:
         const char* start = p;
         for (; p != data + len; p++) {
           ch = *p;
-          c = TOKEN(ch);
+          c = HEADER_FIELD_TOKEN(ch);
 
           if (!c)
             break;
@@ -1267,7 +1269,7 @@ reexecute:
             case h_general: {
               size_t left = data + len - p;
               const char* pe = p + MIN(left, max_header_size);
-              while (p+1 < pe && TOKEN(p[1])) {
+              while (p+1 < pe && HEADER_FIELD_TOKEN(p[1])) {
                 p++;
               }
               break;
